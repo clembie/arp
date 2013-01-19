@@ -16,10 +16,14 @@ recv.listen();
 recv.event("/visynth", "if") @=> OscEvent oe;
 
 // MIDI Out
-0 => int SEND_MIDI;
+1 => int SEND_MIDI;
 MIDIsender sender;
+MIDIsender vissender;
 if(SEND_MIDI) {
+    sender.set_channel(1);
     sender.open(2);
+    vissender.set_channel(2);
+    vissender.open(2);
 }
 
 fun void sendtovis(int index, float charge) {
@@ -51,11 +55,14 @@ fun void echo(Launchpad @ lp) {
         } else {
             if(times[noteindex] != timezero) {
                 now - times[noteindex] => dur duration;
-                sendtovis(noteindex, duration/1::ms);
+                duration/1::ms => float fdur;
+                if(fdur > 5000) { 5000.0 => fdur; }
+                fdur/5000.0 => float normdur;
+                sendtovis(noteindex, normdur);
                 if(SEND_MIDI) {
                     sender.noteoff(noteindex + 1 + midilower);
                 }
-                <<< "noteoff:", noteindex, notefreq , duration/1::ms >>>;
+                <<< "noteoff:", noteindex, notefreq , normdur >>>;
                 timezero => times[noteindex];
             } else {
                 <<< "detected a rip in the spacetime continuum..." >>>;
@@ -69,16 +76,42 @@ fun void echo(Launchpad @ lp) {
     }
 }
 
+fun void vismidinote(int n, int v) {    
+    vissender.noteon(n, v);
+    300::ms => now;
+    vissender.noteoff(n);
+    100::ms => now;
+    me.yield();
+}
+
+
+fun void vislistener(OscEvent @ oe, MIDIsender sender) {
+    while(true) {
+        oe => now;
+
+        while(oe.nextMsg() != 0) {
+            oe.getInt() => int note;
+            oe.getFloat() => float velocity;
+            (velocity * 127.0) $ int => int midivel;
+            spork ~ vismidinote(note, midivel);
+            me.yield();
+        }
+    }
+}
+
+
 Launchpad lp;
 if(me.args() > 0) {
-    <<< "HAZ AN ARG" >>>;
     Launchpad.Launchpad(Std.atoi(me.arg(0))) @=> lp;
 } else {
-    <<< "FUCK FUCK FUCK" >>>;
     Launchpad.Launchpad(1) @=> lp;
 }
 
 spork ~ echo(lp);
 while(true) {
-    100::ms => now;
+    1000::ms => now;
+
+    // test
+    //spork ~ vismidinote(64, 80);
+    //me.yield();
 }
