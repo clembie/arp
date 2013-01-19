@@ -1,4 +1,4 @@
-48 => int midilower;
+24 => int midilower;
 time times[64];
 
 time timezero;
@@ -15,6 +15,11 @@ OscRecv recv;
 recv.listen();
 recv.event("/visynth", "if") @=> OscEvent oe;
 
+// MIDI Out
+MIDIsender sender;
+sender.open(2);
+
+
 fun void sendtovis(int index, float charge) {
     xmit.startMsg("/note", "if");
     xmit.addInt(index);
@@ -29,6 +34,7 @@ fun void echo(Launchpad @ lp) {
         //<<< lp.e.column, lp.e.row, lp.e.velocity >>>;
 
         // Who?
+        if(lp.e.column > 7 || lp.e.row > 7) { continue; }
         (lp.e.column + (lp.e.row*8)) => int noteindex;
         Std.mtof(noteindex - 1 + midilower) => float notefreq;
         
@@ -37,12 +43,17 @@ fun void echo(Launchpad @ lp) {
             <<< "noteon:", noteindex, notefreq >>>;
             now => times[noteindex];
             sendtovis(noteindex, 0);
+            sender.noteon(noteindex + 1 + midilower, 100);
         } else {
-            <<< "noteoff:", noteindex, notefreq >>>;
             if(times[noteindex] != timezero) {
                 now - times[noteindex] => dur duration;
                 sendtovis(noteindex, duration/1::ms);
+                sender.noteoff(noteindex + 1 + midilower);
+                <<< "noteoff:", noteindex, notefreq , duration/1::ms >>>;
                 timezero => times[noteindex];
+            } else {
+                <<< "detected a rip in the spacetime continuum..." >>>;
+                sender.stop_hanging_notes(-1);
             }
         }
 
