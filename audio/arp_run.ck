@@ -16,9 +16,11 @@ recv.listen();
 recv.event("/visynth", "if") @=> OscEvent oe;
 
 // MIDI Out
+0 => int SEND_MIDI;
 MIDIsender sender;
-sender.open(2);
-
+if(SEND_MIDI) {
+    sender.open(2);
+}
 
 fun void sendtovis(int index, float charge) {
     xmit.startMsg("/note", "if");
@@ -43,17 +45,23 @@ fun void echo(Launchpad @ lp) {
             <<< "noteon:", noteindex, notefreq >>>;
             now => times[noteindex];
             sendtovis(noteindex, 0);
-            sender.noteon(noteindex + 1 + midilower, 100);
+            if(SEND_MIDI) {
+                sender.noteon(noteindex + 1 + midilower, 100);
+            }
         } else {
             if(times[noteindex] != timezero) {
                 now - times[noteindex] => dur duration;
                 sendtovis(noteindex, duration/1::ms);
-                sender.noteoff(noteindex + 1 + midilower);
+                if(SEND_MIDI) {
+                    sender.noteoff(noteindex + 1 + midilower);
+                }
                 <<< "noteoff:", noteindex, notefreq , duration/1::ms >>>;
                 timezero => times[noteindex];
             } else {
                 <<< "detected a rip in the spacetime continuum..." >>>;
-                sender.stop_hanging_notes(-1);
+                if(SEND_MIDI) {
+                    sender.stop_hanging_notes(-1);
+                }
             }
         }
 
@@ -61,13 +69,16 @@ fun void echo(Launchpad @ lp) {
     }
 }
 
+Launchpad lp;
+if(me.args() > 0) {
+    <<< "HAZ AN ARG" >>>;
+    Launchpad.Launchpad(Std.atoi(me.arg(0))) @=> lp;
+} else {
+    <<< "FUCK FUCK FUCK" >>>;
+    Launchpad.Launchpad(1) @=> lp;
+}
 
-
-
-Launchpad.Launchpad(1) @=> Launchpad lp;
 spork ~ echo(lp);
 while(true) {
     100::ms => now;
 }
-
-
