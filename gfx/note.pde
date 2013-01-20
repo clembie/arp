@@ -27,7 +27,6 @@ class Note {
     maxDiameter = _maxDiameter;
     age = _age;
     maxAge = _maxAge;
-    sendNote(noteIndex, diameter / maxDiameter);
   }
 
   void update() {
@@ -45,7 +44,7 @@ class Note {
   void update_living() {
     noFill();
     strokeWeight(8);
-    stroke(100, 255);
+    stroke(255, 255);
     ellipse(x, y, diameter, diameter);
   }
 
@@ -55,7 +54,7 @@ class Note {
     opacity = pow(norm(age, maxAge, 0), 1.1) * 100;
     diameter = 10 + (1 - pow(1 - norm(age, 0, maxAge), 1.1)) * maxDiameter;
     strokeWeight(8);
-    stroke(100, opacity);
+    stroke(255, opacity);
     ellipse(x, y, diameter, diameter);
     if(age >= maxAge) {
       state = NOTE_DEAD;
@@ -66,10 +65,11 @@ class Note {
     if(velocity > 1.0) {
       velocity = velocity / 5000.0;
     }
+    velocity = max(velocity, 0.1);
     switch(state) {
       case NOTE_DOWN:
-        maxDiameter = width * velocity;
-        maxAge = floor(240.0 * velocity);
+        maxDiameter = 4 * width * velocity;
+        maxAge = floor(200.0 * velocity);
         state = NOTE_DECAY;
         return;
     }
@@ -84,7 +84,12 @@ class Note {
 
     PVector p1 = new PVector(x, y);
     PVector p2 = new PVector(other.x, other.y);
-    return diameter * 0.5 + other.diameter * 0.5 > p1.dist(p2);
+    if(diameter * 0.5 + other.diameter * 0.5 > p1.dist(p2)) {
+      state = NOTE_COLLIDED;
+      other.state = NOTE_COLLIDED;
+      return true;
+    }
+    return false;
   }
 
   PVector collisionPoint(Note other) {

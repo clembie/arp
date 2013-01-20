@@ -21,10 +21,10 @@ ArrayList notes;
 
 void setup() {
   gutter = (height - width) / 2.0;
-  cellWidth = width / 8.0;
-  translate(gutter, 0);
+  cellWidth = width / 7.0;
+  // translate(gutter, 0);
 
-  size(800, 600);
+  size(600, 600);
   frameRate(FRAME_RATE);
   smooth();
   background(0);
@@ -58,15 +58,14 @@ void collide() {
       Note n1 = (Note)notes.get(i);
       Note n2 = (Note)notes.get(j);
       if(n1.collide(n2)) {
-        PVector p = n1.collisionPoint(n2);
-        notes.add(new Note(
-              p.x,
-              p.y,
-              (n1.diameter + n2.diameter) / 2.0,
-              (n1.maxDiameter + n2.maxDiameter) / 2.0,
-              (n1.age + n2.age) / 2,
-              (n1.maxAge + n2.maxAge) / 2
-        ));
+        // PVector p = n1.collisionPoint(n2);
+        int newIndex = (n1.noteIndex + n2.noteIndex) / 2;
+        float newVel = ((n1.diameter / n1.maxDiameter) + (n2.diameter / n2.maxDiameter)) / 2.0;
+        println(newIndex);
+        Note note = new Note(newIndex);
+        note.release(newVel);
+        notes.add(note);
+        sendNote(newIndex, newVel);
       }
     }
   }
@@ -107,8 +106,8 @@ PVector getOrigin(int i) {
   float x = col * cellWidth;
   x += 0.5 * cellWidth;
 
-  float y = (8 - row) * cellWidth;
-  y += 0.5 * cellWidth;
+  float y = (7 - row) * cellWidth;
+  // y += 0.5 * cellWidth;
   return new PVector(x, y);
 }
 
