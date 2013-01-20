@@ -85,15 +85,16 @@ fun void vismidinote(int n, int v) {
 }
 
 
-fun void vislistener(OscEvent @ oe, MIDIsender sender) {
+fun void vislistener(OscEvent @ oe) {
     while(true) {
         oe => now;
 
         while(oe.nextMsg() != 0) {
             oe.getInt() => int note;
             oe.getFloat() => float velocity;
+            <<< "vis:", note, velocity >>>;
             (velocity * 127.0) $ int => int midivel;
-            spork ~ vismidinote(note, midivel);
+            spork ~ vismidinote(note + 1 + midilower, midivel);
             me.yield();
         }
     }
@@ -108,6 +109,9 @@ if(me.args() > 0) {
 }
 
 spork ~ echo(lp);
+spork ~ vislistener(oe);
+me.yield();
+
 while(true) {
     1000::ms => now;
 
