@@ -8,6 +8,8 @@ class Note {
   int age;
   int maxAge;
   int state;
+  boolean reaction;
+  int reactionLvl;
 
   Note(int i) {
     noteIndex = i;
@@ -16,6 +18,8 @@ class Note {
     x = v.x;
     y = v.y;
     diameter = 10;
+    reaction = false;
+    reactionLvl = 0;
   }
 
   Note(float _x, float _y, float _diameter, float _maxDiameter, int _age, int _maxAge) {
@@ -27,6 +31,7 @@ class Note {
     maxDiameter = _maxDiameter;
     age = _age;
     maxAge = _maxAge;
+    reaction = true;
   }
 
   void update() {
@@ -43,8 +48,13 @@ class Note {
 
   void update_living() {
     noFill();
-    strokeWeight(8);
-    stroke(255, 255);
+    strokeWeight(14);
+    if(reaction) {
+      stroke(255, 0, 0, 255);
+    } else {
+      stroke(255, 255);
+    }
+
     ellipse(x, y, diameter, diameter);
   }
 
@@ -53,8 +63,12 @@ class Note {
     noFill();
     opacity = pow(norm(age, maxAge, 0), 1.1) * 100;
     diameter = 10 + (1 - pow(1 - norm(age, 0, maxAge), 1.1)) * maxDiameter;
-    strokeWeight(8);
-    stroke(255, opacity);
+    strokeWeight(14);
+    if(reaction) {
+      stroke(255, 0, 0, opacity);
+    } else {
+      stroke(255, opacity);
+    }
     ellipse(x, y, diameter, diameter);
     if(age >= maxAge) {
       state = NOTE_DEAD;
@@ -69,7 +83,7 @@ class Note {
     switch(state) {
       case NOTE_DOWN:
         maxDiameter = 4 * width * velocity;
-        maxAge = floor(200.0 * velocity);
+        maxAge = floor(100.0 * velocity);
         state = NOTE_DECAY;
         return;
     }
